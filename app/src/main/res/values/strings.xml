@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Binding Demo</string>
+    <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean a ante ut lacus pellentesque iaculis eget in elit. Fusce lacinia in elit eget commodo. Aenean mollis euismod metus ac mattis. Mauris convallis libero mattis, finibus eros et, sagittis magna. Vivamus pellentesque bibendum ullamcorper. Donec at metus sit amet arcu posuere malesuada. Maecenas eget dapibus massa, volutpat pharetra mi. Sed eleifend augue in ex dapibus, eget rutrum massa rhoncus. Vestibulum tincidunt in nunc sit amet scelerisque. Donec ullamcorper turpis id efficitur vestibulum.</string>
+</resources>
