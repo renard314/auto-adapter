@@ -1,4 +1,4 @@
-package com.example;
+package com.renard.auto_adapter;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

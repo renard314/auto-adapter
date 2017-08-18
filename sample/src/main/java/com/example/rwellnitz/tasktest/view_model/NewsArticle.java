@@ -1,8 +1,7 @@
 package com.example.rwellnitz.tasktest.view_model;
 
-import com.example.AdapterItem;
-
-import com.example.api.adapter.Unique;
+import com.renard.auto_adapter.AdapterItem;
+import com.renard.auto_adapter.Unique;
 
 @AdapterItem("NewsArticleAdapter")
 public class NewsArticle implements Unique {

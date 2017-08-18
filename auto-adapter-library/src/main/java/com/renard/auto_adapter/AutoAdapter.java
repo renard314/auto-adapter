@@ -1,4 +1,4 @@
-package com.example.api.adapter;
+package com.renard.auto_adapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;

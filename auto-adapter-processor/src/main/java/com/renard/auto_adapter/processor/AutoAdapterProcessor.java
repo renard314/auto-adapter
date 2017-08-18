@@ -1,4 +1,4 @@
-package com.example;
+package com.renard.auto_adapter.processor;
 
 import java.io.IOException;
 
@@ -22,11 +22,13 @@ import javax.lang.model.element.TypeElement;
 
 import javax.tools.Diagnostic;
 
+import com.renard.auto_adapter.AdapterItem;
+
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 
-@SupportedAnnotationTypes("com.example.AdapterItem")
+@SupportedAnnotationTypes("com.renard.auto_adapter.AdapterItem")
 public class AutoAdapterProcessor extends AbstractProcessor {
     public AutoAdapterProcessor() {
         super();
