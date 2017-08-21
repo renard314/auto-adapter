@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 
-          package="com.example.api"
+          package="com.renard.auto_adapter"
 >
 
     <application android:allowBackup="true"
