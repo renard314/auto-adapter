@@ -14,6 +14,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 class AdapterGenerator {
+
     private final String adapterName;
     private final Map<TypeElement, ClassName> modelToFactory;
 
@@ -33,7 +34,7 @@ class AdapterGenerator {
     }
 
     private TypeSpec.Builder createClassBuilder() {
-        ClassName parentClassName = ClassName.get("com.renard.auto_adapter", "AutoAdapter");
+        ClassName parentClassName = ClassName.get(AutoAdapterProcessor.LIBRARY_PACKAGE, "AutoAdapter");
 
         return TypeSpec.classBuilder(adapterName).addModifiers(Modifier.PUBLIC, Modifier.FINAL).superclass(
                 parentClassName);

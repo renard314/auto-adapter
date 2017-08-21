@@ -1,15 +1,14 @@
 package com.example.rwellnitz.tasktest.auto;
 
-import com.example.rwellnitz.tasktest.NewsArticleAdapter;
-import com.example.rwellnitz.tasktest.R;
-import com.example.rwellnitz.tasktest.view_model.Advertisement;
-import com.example.rwellnitz.tasktest.view_model.NewsArticle;
-
 import android.os.Bundle;
-
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+
+import com.example.rwellnitz.tasktest.R;
+import com.example.rwellnitz.tasktest.view_model.Advertisement;
+import com.example.rwellnitz.tasktest.view_model.NewsArticle;
+import com.renard.auto_adapter.NewsArticleAdapter;
 
 public class MainActivity extends AppCompatActivity {
     private IdGenerator idGenerator = new IdGenerator();

@@ -12,6 +12,7 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.WildcardTypeName;
 
 class ViewHolderGenerator {
+    private static final ClassName BINDER_CLASS_NAME = ClassName.get(AutoAdapterProcessor.LIBRARY_PACKAGE, "Binder");
     private final ClassName viewHolderSimpleName;
     private final ClassName dataBindingName;
 
@@ -40,8 +41,7 @@ class ViewHolderGenerator {
     }
 
     private void addConstructor(final TypeSpec.Builder viewHolderClass) {
-        ClassName viewClassName = ClassName.get("android.view", "View");
-        MethodSpec constructor = MethodSpec.constructorBuilder().addParameter(viewClassName, "itemView")
+        MethodSpec constructor = MethodSpec.constructorBuilder().addParameter(AndroidClassNames.VIEW, "itemView")
                                            .addParameter(dataBindingName, "binding")
                                            .addCode("super(itemView);\nthis.binding = binding;\n").build();
 
@@ -54,16 +54,12 @@ class ViewHolderGenerator {
     }
 
     private TypeSpec.Builder createClassBuilder(final TypeElement model) {
-        ClassName recyclerViewClassName = ClassName.get("android.support.v7.widget", "RecyclerView");
 
-        ClassName viewHolderClassName = recyclerViewClassName.nestedClass("ViewHolder");
-
-        ClassName viewHolderBinderClassName = ClassName.get("com.renard.auto_adapter", "Binder");
-        ParameterizedTypeName viewHolderBinderTypeName = ParameterizedTypeName.get(viewHolderBinderClassName,
+        ParameterizedTypeName viewHolderBinderTypeName = ParameterizedTypeName.get(BINDER_CLASS_NAME,
                 WildcardTypeName.get(model.asType()));
 
         return TypeSpec.classBuilder(viewHolderSimpleName).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                       .superclass(viewHolderClassName).addSuperinterface(viewHolderBinderTypeName);
+                       .superclass(AndroidClassNames.VIEW_HOLDER).addSuperinterface(viewHolderBinderTypeName);
     }
 
 }

@@ -40,23 +40,22 @@ class ViewHolderFactoryGenerator {
     }
 
     private void addCreateMethod(final TypeSpec.Builder viewHolderFactoryClass) {
-        ClassName layoutInflaterClassName = ClassName.get("android.view", "LayoutInflater");
-        ClassName viewGroupClassName = ClassName.get("android.view", "ViewGroup");
 
         CodeBlock code = CodeBlock.builder()
-                                  .add("$T from = LayoutInflater.from(parent.getContext());\n", layoutInflaterClassName)
+                                  .add("$T from = LayoutInflater.from(parent.getContext());\n",
+                                      AndroidClassNames.INFLATER)
                                   .add("$1T binding = $2T.inflate(from, parent, false);\n", dataBindingClassName,
                 dataBindingClassName).add("return new $T(binding.getRoot(), binding);\n", viewHolderClassName).build();
 
         MethodSpec.Builder createMethod = MethodSpec.methodBuilder("create").returns(viewHolderClassName)
-                                                    .addParameter(viewGroupClassName, "parent").addCode(code)
+                                                    .addParameter(AndroidClassNames.VIEW_GROUP, "parent").addCode(code)
                                                     .addModifiers(Modifier.PUBLIC);
 
         viewHolderFactoryClass.addMethod(createMethod.build());
     }
 
     private TypeSpec.Builder createBuilder() {
-        ClassName factoryClassName = ClassName.get("com.renard.auto_adapter", "ViewHolderFactory");
+        ClassName factoryClassName = ClassName.get(AutoAdapterProcessor.LIBRARY_PACKAGE, "ViewHolderFactory");
         ParameterizedTypeName factoryTypeName = ParameterizedTypeName.get(factoryClassName, viewHolderClassName);
 
         return TypeSpec.classBuilder(viewHolderFactoryClassName).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
