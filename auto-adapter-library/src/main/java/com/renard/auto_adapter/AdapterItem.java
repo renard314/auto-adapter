@@ -10,5 +10,5 @@ import java.lang.annotation.Target;
 public @interface AdapterItem {
     String value();
 
-    Class dataBinding() default Object.class;
+    Class<? extends AutoAdapterViewHolder> viewHolder() default AutoAdapterViewHolder.class;
 }

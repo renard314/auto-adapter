@@ -10,23 +10,22 @@ import android.support.v7.widget.RecyclerView;
 
 import android.view.ViewGroup;
 
-public abstract class AutoAdapter extends RecyclerView.Adapter {
+abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
     private Map<Class, ViewHolderFactory> itemClassToViewFactoryMapping = new HashMap<>();
     private ArrayList<Unique> items = new ArrayList<>();
 
-    protected AutoAdapter(final Map<Class, ViewHolderFactory> mapping) {
+    AutoAdapter() {
         setHasStableIds(true);
-        itemClassToViewFactoryMapping = mapping;
+    }
+
+    <T extends Unique, S extends ViewHolderFactory<T, ? extends AutoAdapterViewHolder<T>>> void putMapping(
+            final Class<T> itemClass, final S viewHolderFactory) {
+        itemClassToViewFactoryMapping.put(itemClass, viewHolderFactory);
     }
 
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
+    public AutoAdapterViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
         return viewHolderFactoryForViewType(viewType).create(parent);
-    }
-
-    private ViewHolderFactory viewHolderFactoryForPosition(final int position) {
-        Unique unique = items.get(position);
-        return itemClassToViewFactoryMapping.get(unique.getClass());
     }
 
     @NonNull
@@ -41,11 +40,22 @@ public abstract class AutoAdapter extends RecyclerView.Adapter {
         return null;
     }
 
-    protected void addItem(final Unique item) {
+    void removeItem(final Unique item) {
+        for (int i = 0; i < items.size(); i++) {
+            Unique currentItem = items.get(i);
+            if (item.getId() == currentItem.getId()) {
+                items.remove(i);
+                notifyItemRemoved(i);
+                return;
+            }
+        }
+    }
+
+    void addItem(final Unique item) {
         items.add(item);
         for (int i = 0; i < items.size(); i++) {
             Unique currentItem = items.get(i);
-            if (currentItem.getId() == currentItem.getId()) {
+            if (item.getId() == currentItem.getId()) {
                 notifyItemChanged(i, item);
                 return;
             }
@@ -56,13 +66,15 @@ public abstract class AutoAdapter extends RecyclerView.Adapter {
     }
 
     @Override
-    public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
-        ((Binder) holder).bind(items.get(position));
+    @SuppressWarnings("unchecked")
+    public void onBindViewHolder(final AutoAdapterViewHolder holder, final int position) {
+        holder.bind(items.get(position));
     }
 
     @Override
     public int getItemViewType(final int position) {
-        ViewHolderFactory viewHolderFactory = viewHolderFactoryForPosition(position);
+        final Unique unique = items.get(position);
+        final ViewHolderFactory viewHolderFactory = itemClassToViewFactoryMapping.get(unique.getClass());
         return viewHolderFactory.getViewType();
     }
 

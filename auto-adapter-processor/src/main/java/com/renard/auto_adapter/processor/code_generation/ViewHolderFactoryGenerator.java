@@ -1,6 +1,9 @@
-package com.renard.auto_adapter.processor;
+package com.renard.auto_adapter.processor.code_generation;
 
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+
+import com.renard.auto_adapter.processor.AutoAdapterProcessor;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -9,13 +12,13 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-class ViewHolderFactoryGenerator {
+public class ViewHolderFactoryGenerator {
     private final ClassName viewHolderFactoryClassName;
     private final ClassName dataBindingClassName;
     private final ClassName viewHolderClassName;
     private final int viewType;
 
-    ViewHolderFactoryGenerator(final ClassName viewHolderFactoryClassName, final ClassName dataBindingClassName,
+    public ViewHolderFactoryGenerator(final ClassName viewHolderFactoryClassName, final ClassName dataBindingClassName,
             final ClassName viewHolderClassName, final int viewType) {
         this.viewHolderFactoryClassName = viewHolderFactoryClassName;
         this.dataBindingClassName = dataBindingClassName;
@@ -23,8 +26,8 @@ class ViewHolderFactoryGenerator {
         this.viewType = viewType;
     }
 
-    TypeSpec generate() {
-        TypeSpec.Builder classBuilder = createBuilder();
+    public TypeSpec generate(final TypeElement model) {
+        TypeSpec.Builder classBuilder = createBuilder(model);
 
         addCreateMethod(classBuilder);
         addGetViewTypeMethod(classBuilder);
@@ -54,9 +57,11 @@ class ViewHolderFactoryGenerator {
         viewHolderFactoryClass.addMethod(createMethod.build());
     }
 
-    private TypeSpec.Builder createBuilder() {
+    private TypeSpec.Builder createBuilder(final TypeElement model) {
         ClassName factoryClassName = ClassName.get(AutoAdapterProcessor.LIBRARY_PACKAGE, "ViewHolderFactory");
-        ParameterizedTypeName factoryTypeName = ParameterizedTypeName.get(factoryClassName, viewHolderClassName);
+
+        ParameterizedTypeName factoryTypeName = ParameterizedTypeName.get(factoryClassName,
+                ParameterizedTypeName.get(model.asType()), viewHolderClassName);
 
         return TypeSpec.classBuilder(viewHolderFactoryClassName).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                        .addSuperinterface(factoryTypeName);
