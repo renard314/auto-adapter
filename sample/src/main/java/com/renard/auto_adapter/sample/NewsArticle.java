@@ -1,10 +1,9 @@
-package com.example.rwellnitz.tasktest.view_model;
+package com.renard.auto_adapter.sample;
 
-import com.example.rwellnitz.tasktest.auto.MyViewHolder;
 import com.renard.auto_adapter.AdapterItem;
 import com.renard.auto_adapter.Unique;
 
-@AdapterItem(value = "NewsArticleAdapter", viewHolder = MyViewHolder.class)
+@AdapterItem("NewsArticleAdapter")
 public class NewsArticle implements Unique {
     private final long id;
 

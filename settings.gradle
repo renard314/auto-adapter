@@ -1,1 +1,1 @@
-include ':sample', ':auto-adapter-processor', ':auto-adapter-library'
+include ':sample', ':auto-adapter-processor', ':auto-adapter-library', ':auto-adapter-annotations'

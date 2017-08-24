@@ -6,7 +6,7 @@
 
         <variable
             name="advertisement"
-            type="com.example.rwellnitz.tasktest.view_model.Advertisement"/>
+            type="com.renard.auto_adapter.sample.Advertisement"/>
     </data>
 
 

@@ -18,8 +18,8 @@ abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
         setHasStableIds(true);
     }
 
-    <T extends Unique, S extends ViewHolderFactory<T, ? extends AutoAdapterViewHolder<T>>> void putMapping(
-            final Class<T> itemClass, final S viewHolderFactory) {
+    <Item extends Unique, ViewHolderFactory extends com.renard.auto_adapter.ViewHolderFactory<Item>> void putMapping(
+            final Class<Item> itemClass, final ViewHolderFactory viewHolderFactory) {
         itemClassToViewFactoryMapping.put(itemClass, viewHolderFactory);
     }
 
@@ -37,7 +37,7 @@ abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
         }
 
         // can never happen
-        return null;
+        throw new IllegalStateException();
     }
 
     void removeItem(final Unique item) {

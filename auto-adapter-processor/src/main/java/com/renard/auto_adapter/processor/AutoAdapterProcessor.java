@@ -165,7 +165,7 @@ public class AutoAdapterProcessor extends AbstractProcessor {
             for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
                 if (Util.typeToString(annotationMirror.getAnnotationType()).equals(ADAPTER_ITEM_NAME)) {
                     for (ExecutableElement executableElement : annotationMirror.getElementValues().keySet()) {
-                        if ("viewHolder".equals(executableElement.getSimpleName().toString())) {
+                        if ("viewBinder".equals(executableElement.getSimpleName().toString())) {
                             // TODO
                         } else if ("value".equals(executableElement.getSimpleName().toString())) {
                             AnnotationValue annotationValue = annotationMirror.getElementValues().get(

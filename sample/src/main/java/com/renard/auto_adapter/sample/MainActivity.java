@@ -1,17 +1,14 @@
-package com.example.rwellnitz.tasktest.auto;
+package com.renard.auto_adapter.sample;
+
+import com.renard.auto_adapter.NewsArticleAdapter;
 
 import android.os.Bundle;
+
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
-import com.example.rwellnitz.tasktest.R;
-import com.example.rwellnitz.tasktest.view_model.Advertisement;
-import com.example.rwellnitz.tasktest.view_model.NewsArticle;
-import com.renard.auto_adapter.NewsArticleAdapter;
-
 public class MainActivity extends AppCompatActivity {
-    private IdGenerator idGenerator = new IdGenerator();
     private NewsArticleAdapter adapter;
 
     @Override
@@ -31,10 +28,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addModelsToAdapter() {
-        adapter.addAdvertisement(new Advertisement(idGenerator.nextId()));
-        adapter.addNewsArticle(new NewsArticle(idGenerator.nextId()));
-        adapter.addAdvertisement(new Advertisement(idGenerator.nextId()));
-        adapter.addNewsArticle(new NewsArticle(idGenerator.nextId()));
+        adapter.addAdvertisement(new Advertisement(0));
+        adapter.addNewsArticle(new NewsArticle(1));
+        adapter.addAdvertisement(new Advertisement(2));
+        adapter.addNewsArticle(new NewsArticle(3));
     }
 
 }

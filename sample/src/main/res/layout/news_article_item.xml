@@ -6,7 +6,7 @@
 
         <variable
             name="newsArticle"
-            type="com.example.rwellnitz.tasktest.view_model.NewsArticle"/>
+            type="com.renard.auto_adapter.sample.NewsArticle"/>
     </data>
 
     <LinearLayout

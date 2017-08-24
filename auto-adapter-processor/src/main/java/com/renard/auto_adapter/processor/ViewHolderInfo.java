@@ -26,16 +26,18 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 
+import com.renard.auto_adapter.processor.code_generation.ViewBinderGenerator;
 import com.renard.auto_adapter.processor.code_generation.ViewHolderFactoryGenerator;
-import com.renard.auto_adapter.processor.code_generation.ViewHolderGenerator;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 
 class ViewHolderInfo {
-    private static final String VIEW_DATA_BINDING = "android.databinding.ViewDataBinding";
 
-    private final ClassName viewHolderClassName;
+    private static final String VIEW_DATA_BINDING = "android.databinding.ViewDataBinding";
+    private static final ClassName VIEW_HOLDER_CLASS_NAME = ClassName.get(LIBRARY_PACKAGE, "AutoAdapterViewHolder");
+
+    private final ClassName viewBinderClassName;
     final ClassName viewHolderFactoryClassName;
     private final TypeElement model;
     private final Types typeUtils;
@@ -45,20 +47,20 @@ class ViewHolderInfo {
 
     ViewHolderInfo(final TypeElement model, final Types typeUtils, final Elements elementUtils,
             final Messager messager) {
-        this.viewHolderClassName = getViewHolderClassName(model);
+        this.viewBinderClassName = getViewHolderClassName(model);
         this.typeUtils = typeUtils;
         this.elementUtils = elementUtils;
         this.messager = messager;
-        this.viewHolderFactoryClassName = getViewHolderFactoryClassName(viewHolderClassName);
+        this.viewHolderFactoryClassName = getViewHolderFactoryClassName(model);
         this.model = model;
     }
 
     private ClassName getViewHolderClassName(final TypeElement model) {
-        return ClassName.get(LIBRARY_PACKAGE, model.getSimpleName() + "ViewHolder");
+        return ClassName.get(LIBRARY_PACKAGE, model.getSimpleName() + "ViewBinder");
     }
 
-    private ClassName getViewHolderFactoryClassName(final ClassName viewHolderClassName) {
-        return ClassName.get(LIBRARY_PACKAGE, viewHolderClassName.simpleName() + "Factory");
+    private ClassName getViewHolderFactoryClassName(final TypeElement model) {
+        return ClassName.get(LIBRARY_PACKAGE, model.getSimpleName() + "ViewBinderFactory");
     }
 
     Optional<Element> findDataBindingForModel(final Set<? extends Element> rootElements) {
@@ -125,14 +127,15 @@ class ViewHolderInfo {
                                                             .filter(ExecutableElementPredicates.parameterIsSameType(
                     model)).first().get();
 
-        ViewHolderGenerator viewHolderGenerator = new ViewHolderGenerator(viewHolderClassName, className);
-        return viewHolderGenerator.generate(model, setVariableMethod);
+        ViewBinderGenerator viewBinderGenerator = new ViewBinderGenerator(viewBinderClassName, className);
+        return viewBinderGenerator.generate(model, setVariableMethod);
     }
 
     TypeSpec generateViewHolderFactory(final Element element) {
         ClassName className = getClassNameFrom(element);
         ViewHolderFactoryGenerator viewHolderFactoryGenerator = new ViewHolderFactoryGenerator(
-                viewHolderFactoryClassName, className, viewHolderClassName, NEXT_ID.getAndIncrement());
+                viewHolderFactoryClassName, className, viewBinderClassName, NEXT_ID.getAndIncrement(),
+                VIEW_HOLDER_CLASS_NAME);
         return viewHolderFactoryGenerator.generate(model);
     }
 

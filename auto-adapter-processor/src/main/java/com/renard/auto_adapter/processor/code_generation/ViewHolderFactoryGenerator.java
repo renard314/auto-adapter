@@ -15,21 +15,23 @@ import com.squareup.javapoet.TypeSpec;
 public class ViewHolderFactoryGenerator {
     private final ClassName viewHolderFactoryClassName;
     private final ClassName dataBindingClassName;
-    private final ClassName viewHolderClassName;
+    private final ClassName viewBinderClassName;
     private final int viewType;
+    private final ClassName viewHolderClassName;
 
     public ViewHolderFactoryGenerator(final ClassName viewHolderFactoryClassName, final ClassName dataBindingClassName,
-            final ClassName viewHolderClassName, final int viewType) {
+            final ClassName viewBinderClassName, final int viewType, final ClassName viewHolderClassName) {
         this.viewHolderFactoryClassName = viewHolderFactoryClassName;
         this.dataBindingClassName = dataBindingClassName;
-        this.viewHolderClassName = viewHolderClassName;
+        this.viewBinderClassName = viewBinderClassName;
         this.viewType = viewType;
+        this.viewHolderClassName = viewHolderClassName;
     }
 
     public TypeSpec generate(final TypeElement model) {
         TypeSpec.Builder classBuilder = createBuilder(model);
 
-        addCreateMethod(classBuilder);
+        addCreateMethod(classBuilder, model);
         addGetViewTypeMethod(classBuilder);
 
         return classBuilder.build();
@@ -42,17 +44,20 @@ public class ViewHolderFactoryGenerator {
         viewHolderFactoryClass.addMethod(getViewTypeMethod.build());
     }
 
-    private void addCreateMethod(final TypeSpec.Builder viewHolderFactoryClass) {
+    private void addCreateMethod(final TypeSpec.Builder viewHolderFactoryClass, final TypeElement model) {
+        CodeBlock.Builder builder = CodeBlock.builder();
 
-        CodeBlock code = CodeBlock.builder()
-                                  .add("$T from = LayoutInflater.from(parent.getContext());\n",
-                                      AndroidClassNames.INFLATER)
-                                  .add("$1T binding = $2T.inflate(from, parent, false);\n", dataBindingClassName,
-                dataBindingClassName).add("return new $T(binding.getRoot(), binding);\n", viewHolderClassName).build();
+        builder.add("$T from = LayoutInflater.from(parent.getContext());\n", AndroidClassNames.INFLATER)
+               .add("$1T binding = $2T.inflate(from, parent, false);\n", dataBindingClassName, dataBindingClassName)
+               .add("$1T binder = new $2T(binding);\n", viewBinderClassName, viewBinderClassName)
+               .add("return new AutoAdapterViewHolder<>(binding.getRoot(),binder);\n").build();
 
-        MethodSpec.Builder createMethod = MethodSpec.methodBuilder("create").returns(viewHolderClassName)
-                                                    .addParameter(AndroidClassNames.VIEW_GROUP, "parent").addCode(code)
-                                                    .addModifiers(Modifier.PUBLIC);
+        ParameterizedTypeName parameterizedTypeName = ParameterizedTypeName.get(viewHolderClassName,
+                TypeName.get(model.asType()));
+
+        MethodSpec.Builder createMethod = MethodSpec.methodBuilder("create").returns(parameterizedTypeName)
+                                                    .addParameter(AndroidClassNames.VIEW_GROUP, "parent")
+                                                    .addCode(builder.build()).addModifiers(Modifier.PUBLIC);
 
         viewHolderFactoryClass.addMethod(createMethod.build());
     }
@@ -61,7 +66,7 @@ public class ViewHolderFactoryGenerator {
         ClassName factoryClassName = ClassName.get(AutoAdapterProcessor.LIBRARY_PACKAGE, "ViewHolderFactory");
 
         ParameterizedTypeName factoryTypeName = ParameterizedTypeName.get(factoryClassName,
-                ParameterizedTypeName.get(model.asType()), viewHolderClassName);
+                ParameterizedTypeName.get(model.asType()));
 
         return TypeSpec.classBuilder(viewHolderFactoryClassName).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                        .addSuperinterface(factoryTypeName);

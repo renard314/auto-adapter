@@ -10,5 +10,6 @@ import java.lang.annotation.Target;
 public @interface AdapterItem {
     String value();
 
-    Class<? extends AutoAdapterViewHolder> viewHolder() default AutoAdapterViewHolder.class;
+    Class<? extends ViewBinder> viewBinder() default ViewBinder.class;
+
 }
