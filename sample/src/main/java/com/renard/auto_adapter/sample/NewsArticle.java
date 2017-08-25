@@ -3,7 +3,7 @@ package com.renard.auto_adapter.sample;
 import com.renard.auto_adapter.AdapterItem;
 import com.renard.auto_adapter.Unique;
 
-@AdapterItem("NewsArticleAdapter")
+@AdapterItem(value = "NewsArticleAdapter", viewBinder = NewsArticeBinder2.class)
 public class NewsArticle implements Unique {
     private final long id;
 

@@ -32,48 +32,61 @@ public class ViewBinderGenerator {
         addConstructor(builder);
         addBindMethod(setVariableMethod, builder);
         addGetLayoutResourceIdMethod(builder);
+        addCreateViewMethod(builder);
 
         return builder.build();
+    }
+    private void addCreateViewMethod(TypeSpec.Builder builder) {
+        MethodSpec.Builder method = MethodSpec.methodBuilder("createView")
+                .addParameter(AndroidClassNames.VIEW, "view")
+                .addAnnotation(Override.class)
+                .addModifiers(Modifier.PUBLIC);
+
+        builder.addMethod(method.build());
     }
 
     private void addBindMethod(final ExecutableElement setVariableMethod, final TypeSpec.Builder viewHolderClass) {
         VariableElement parameter = setVariableMethod.getParameters().get(0);
         MethodSpec.Builder bindMethod = MethodSpec.methodBuilder("bind")
-                                                  .addParameter(TypeName.get(parameter.asType()), "model")
-                                                  .addAnnotation(Override.class).addModifiers(Modifier.PUBLIC).addCode(
-                                                      "binding." + setVariableMethod.getSimpleName().toString()
-                                                          + "(model);\n");
+                .addParameter(TypeName.get(parameter.asType()), "model")
+                .addAnnotation(Override.class)
+                .addModifiers(Modifier.PUBLIC)
+                .addCode("binding." + setVariableMethod.getSimpleName().toString() + "(model);\n");
 
         viewHolderClass.addMethod(bindMethod.build());
     }
 
-    private void addGetLayoutResourceIdMethod(final TypeSpec.Builder viewHolderClass) {
-        MethodSpec.Builder method = MethodSpec.methodBuilder("getLayoutResourceId").addAnnotation(Override.class)
-                                              .addCode("return 0;\n").addModifiers(Modifier.PUBLIC).returns(
-                                                  TypeName.INT);
+    private void addGetLayoutResourceIdMethod(final TypeSpec.Builder builder) {
+        MethodSpec.Builder method = MethodSpec.methodBuilder("getLayoutResourceId")
+                .addAnnotation(Override.class)
+                .addCode("return 0;\n")
+                .addModifiers(Modifier.PUBLIC)
+                .returns(TypeName.INT);
 
-        viewHolderClass.addMethod(method.build());
+        builder.addMethod(method.build());
     }
 
-    private void addConstructor(final TypeSpec.Builder viewHolderClass) {
-        MethodSpec constructor = MethodSpec.constructorBuilder().addParameter(dataBindingName, "binding")
-                                           .addCode("this.binding = binding;\n").build();
+    private void addConstructor(final TypeSpec.Builder builder) {
+        MethodSpec constructor = MethodSpec.constructorBuilder()
+                .addParameter(dataBindingName, "binding")
+                .addCode("this.binding = binding;\n")
+                .build();
 
-        viewHolderClass.addMethod(constructor);
+        builder.addMethod(constructor);
     }
 
-    private void addFields(final TypeSpec.Builder viewHolderClass) {
-        FieldSpec.Builder builder = FieldSpec.builder(dataBindingName, "binding", Modifier.PRIVATE, Modifier.FINAL);
-        viewHolderClass.addField(builder.build());
+    private void addFields(final TypeSpec.Builder builder) {
+        FieldSpec.Builder field = FieldSpec.builder(dataBindingName, "binding", Modifier.PRIVATE, Modifier.FINAL);
+        builder.addField(field.build());
     }
 
     private TypeSpec.Builder createClassBuilder(final TypeElement model) {
+        TypeName modelType = ParameterizedTypeName.get(model.asType());
+        ParameterizedTypeName viewHolderBinderTypeName = ParameterizedTypeName.get(VIEW_BINDER_NAME, modelType);
 
-        ParameterizedTypeName viewHolderBinderTypeName = ParameterizedTypeName.get(VIEW_BINDER_NAME,
-                ParameterizedTypeName.get(model.asType()));
-
-        return TypeSpec.classBuilder(viewBinderClassName).addModifiers(Modifier.FINAL).addSuperinterface(
-                viewHolderBinderTypeName);
+        return TypeSpec.classBuilder(viewBinderClassName)
+                .addModifiers(Modifier.FINAL)
+                .addSuperinterface(viewHolderBinderTypeName);
     }
 
 }

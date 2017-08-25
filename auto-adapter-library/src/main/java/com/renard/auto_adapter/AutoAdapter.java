@@ -11,16 +11,16 @@ import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 
 abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
-    private Map<Class, ViewHolderFactory> itemClassToViewFactoryMapping = new HashMap<>();
+    private Map<Class, ViewHolderFactory> modelToFactoryMapping = new HashMap<>();
     private ArrayList<Unique> items = new ArrayList<>();
 
     AutoAdapter() {
         setHasStableIds(true);
     }
 
-    <Item extends Unique, ViewHolderFactory extends com.renard.auto_adapter.ViewHolderFactory<Item>> void putMapping(
-            final Class<Item> itemClass, final ViewHolderFactory viewHolderFactory) {
-        itemClassToViewFactoryMapping.put(itemClass, viewHolderFactory);
+    <Item extends Unique, Factory extends ViewHolderFactory<Item>> void putMapping(final Class<Item> itemClass,
+            final Factory viewHolderFactory) {
+        modelToFactoryMapping.put(itemClass, viewHolderFactory);
     }
 
     @Override
@@ -30,7 +30,7 @@ abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
 
     @NonNull
     private ViewHolderFactory viewHolderFactoryForViewType(final int viewType) {
-        for (Map.Entry<Class, ViewHolderFactory> entry : itemClassToViewFactoryMapping.entrySet()) {
+        for (Map.Entry<Class, ViewHolderFactory> entry : modelToFactoryMapping.entrySet()) {
             if (entry.getValue().getViewType() == viewType) {
                 return entry.getValue();
             }
@@ -74,7 +74,7 @@ abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
     @Override
     public int getItemViewType(final int position) {
         final Unique unique = items.get(position);
-        final ViewHolderFactory viewHolderFactory = itemClassToViewFactoryMapping.get(unique.getClass());
+        final ViewHolderFactory viewHolderFactory = modelToFactoryMapping.get(unique.getClass());
         return viewHolderFactory.getViewType();
     }
 

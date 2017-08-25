@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.processing.Messager;
-
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.PackageElement;
@@ -18,49 +18,52 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-
 import javax.tools.Diagnostic;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
-
 import com.renard.auto_adapter.processor.code_generation.ViewBinderGenerator;
 import com.renard.auto_adapter.processor.code_generation.ViewHolderFactoryGenerator;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 
 class ViewHolderInfo {
-
     private static final String VIEW_DATA_BINDING = "android.databinding.ViewDataBinding";
     private static final ClassName VIEW_HOLDER_CLASS_NAME = ClassName.get(LIBRARY_PACKAGE, "AutoAdapterViewHolder");
-
     private final ClassName viewBinderClassName;
     final ClassName viewHolderFactoryClassName;
     private final TypeElement model;
+    private final Optional<AnnotationValue> annotationValue;
     private final Types typeUtils;
     private final Elements elementUtils;
     private final Messager messager;
     private static final AtomicInteger NEXT_ID = new AtomicInteger(0);
 
     ViewHolderInfo(final TypeElement model, final Types typeUtils, final Elements elementUtils,
-            final Messager messager) {
-        this.viewBinderClassName = getViewHolderClassName(model);
+                   final Messager messager, Optional<AnnotationValue> annotationValue) {
+        this.annotationValue = annotationValue;
         this.typeUtils = typeUtils;
         this.elementUtils = elementUtils;
         this.messager = messager;
         this.viewHolderFactoryClassName = getViewHolderFactoryClassName(model);
         this.model = model;
+        this.viewBinderClassName = getViewBinderClassName(model);
     }
 
-    private ClassName getViewHolderClassName(final TypeElement model) {
-        return ClassName.get(LIBRARY_PACKAGE, model.getSimpleName() + "ViewBinder");
+    private ClassName getViewBinderClassName(final TypeElement model) {
+        if(annotationValue.isPresent()){
+            TypeMirror value = (TypeMirror) annotationValue.get().getValue();
+            Element element = typeUtils.asElement(value);
+            return getClassNameFrom(element);
+        } else {
+            return ClassName.get(LIBRARY_PACKAGE, model.getSimpleName() + "ViewBinder");
+        }
     }
 
     private ClassName getViewHolderFactoryClassName(final TypeElement model) {
-        return ClassName.get(LIBRARY_PACKAGE, model.getSimpleName() + "ViewBinderFactory");
+        return ClassName.get(LIBRARY_PACKAGE, model.getSimpleName() + "ViewHolderFactory");
     }
 
     Optional<Element> findDataBindingForModel(final Set<? extends Element> rootElements) {
@@ -74,19 +77,17 @@ class ViewHolderInfo {
 
                     List<ExecutableElement> executableElements = ElementFilter.methodsIn(element.getEnclosedElements());
                     ImmutableList<ExecutableElement> setVariableMethod = FluentIterable.from(executableElements)
-                                                                                       .filter(
-                                                                                           ExecutableElementPredicates.isVoidMethod)
-                                                                                       .filter(
-                                                                                           ExecutableElementPredicates.hasOneParameter)
-                                                                                       .filter(
-                            ExecutableElementPredicates.startsWithSet).toList();
+                            .filter(ExecutableElementPredicates.isVoidMethod)
+                            .filter(ExecutableElementPredicates.hasOneParameter)
+                            .filter(ExecutableElementPredicates.startsWithSet)
+                            .toList();
 
                     boolean hasSetMethodForModel = Collections2.filter(setVariableMethod,
                             ExecutableElementPredicates.parameterIsSameType(model)).size() == 1;
 
                     if (hasSetMethodForModel && setVariableMethod.size() > 1) {
                         messager.printMessage(Diagnostic.Kind.ERROR,
-                            "ViewDataBinding for " + model.getSimpleName() + " has more than one variable.", model);
+                                "ViewDataBinding for " + model.getSimpleName() + " has more than one variable.", model);
                         return Optional.absent();
                     } else if (hasSetMethodForModel) {
                         bindingCandidates.add(element);
@@ -100,10 +101,10 @@ class ViewHolderInfo {
             return Optional.of(bindingCandidates.get(0));
         } else if (bindingCandidates.size() > 1) {
             messager.printMessage(Diagnostic.Kind.ERROR,
-                "There is more than one ViewDataBinding for " + model.getSimpleName(), model);
+                    "There is more than one ViewDataBinding for " + model.getSimpleName(), model);
         } else {
             messager.printMessage(Diagnostic.Kind.ERROR, "Can't find ViewDataBinding for " + model.getSimpleName(),
-                model);
+                    model);
         }
 
         return Optional.absent();
@@ -116,25 +117,32 @@ class ViewHolderInfo {
         return packageOf + "." + simpleName;
     }
 
-    TypeSpec generateViewHolder(final Element element) {
+    TypeSpec generateViewBinder(final Element element) {
         ClassName className = getClassNameFrom(element);
 
         List<ExecutableElement> executableElements = ElementFilter.methodsIn(element.getEnclosedElements());
         ExecutableElement setVariableMethod = FluentIterable.from(executableElements)
-                                                            .filter(ExecutableElementPredicates.isVoidMethod)
-                                                            .filter(ExecutableElementPredicates.hasOneParameter)
-                                                            .filter(ExecutableElementPredicates.startsWithSet)
-                                                            .filter(ExecutableElementPredicates.parameterIsSameType(
-                    model)).first().get();
+                .filter(ExecutableElementPredicates.isVoidMethod)
+                .filter(ExecutableElementPredicates.hasOneParameter)
+                .filter(ExecutableElementPredicates.startsWithSet)
+                .filter(ExecutableElementPredicates.parameterIsSameType(
+                        model)).first().get();
 
         ViewBinderGenerator viewBinderGenerator = new ViewBinderGenerator(viewBinderClassName, className);
         return viewBinderGenerator.generate(model, setVariableMethod);
     }
 
-    TypeSpec generateViewHolderFactory(final Element element) {
-        ClassName className = getClassNameFrom(element);
+    TypeSpec generateViewHolderFactory(final Element dataBinding) {
+        ClassName className = getClassNameFrom(dataBinding);
         ViewHolderFactoryGenerator viewHolderFactoryGenerator = new ViewHolderFactoryGenerator(
-                viewHolderFactoryClassName, className, viewBinderClassName, NEXT_ID.getAndIncrement(),
+                viewHolderFactoryClassName, viewBinderClassName, NEXT_ID.getAndIncrement(),
+                VIEW_HOLDER_CLASS_NAME);
+        return viewHolderFactoryGenerator.generate(model, className);
+    }
+
+    TypeSpec generateViewHolderFactory() {
+        ViewHolderFactoryGenerator viewHolderFactoryGenerator = new ViewHolderFactoryGenerator(
+                viewHolderFactoryClassName, viewBinderClassName, NEXT_ID.getAndIncrement(),
                 VIEW_HOLDER_CLASS_NAME);
         return viewHolderFactoryGenerator.generate(model);
     }
@@ -143,5 +151,9 @@ class ViewHolderInfo {
         PackageElement dataBindingElementPackage = elementUtils.getPackageOf(element);
         String qualifiedName = dataBindingElementPackage.getQualifiedName().toString();
         return ClassName.get(qualifiedName, element.getSimpleName().toString());
+    }
+
+    boolean hasCustomViewBinder() {
+        return annotationValue.isPresent();
     }
 }
