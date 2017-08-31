@@ -1,16 +1,17 @@
 package com.renard.auto_adapter.sample;
 
-import android.view.View;
-import android.widget.TextView;
-
 import com.renard.auto_adapter.ViewBinder;
 
-public class NewsArticeBinder2 implements ViewBinder<NewsArticle> {
+import android.view.View;
+
+import android.widget.TextView;
+
+public class CustomNewsArticeBinder implements ViewBinder<NewsArticle> {
     private TextView headline;
     private TextView body;
 
     @Override
-    public void createView(View view) {
+    public void createView(final View view) {
         headline = (TextView) view.findViewById(R.id.headline);
         body = (TextView) view.findViewById(R.id.body);
     }

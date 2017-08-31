@@ -1,15 +1,9 @@
 package com.renard.auto_adapter.processor;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Maps;
-import com.renard.auto_adapter.processor.code_generation.AdapterGenerator;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.TypeSpec;
+import static com.renard.auto_adapter.processor.AutoAdapterProcessor.ADAPTER_ITEM_ANNOTATION_NAME;
 
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,6 +19,7 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -34,45 +29,62 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+
 import javax.tools.Diagnostic;
 
-@SupportedAnnotationTypes("com.renard.auto_adapter.AdapterItem")
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Maps;
+
+import com.renard.auto_adapter.processor.code_generation.AdapterGenerator;
+
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.TypeSpec;
+
+@SupportedAnnotationTypes(ADAPTER_ITEM_ANNOTATION_NAME)
 public class AutoAdapterProcessor extends AbstractProcessor {
+
     public static final String LIBRARY_PACKAGE = "com.renard.auto_adapter";
-    private static final String ADAPTER_ITEM_NAME = "com.renard.auto_adapter.AdapterItem";
+    static final String ADAPTER_ITEM_ANNOTATION_NAME = "com.renard.auto_adapter.AdapterItem";
+
     private static final Predicate<AnnotationMirror> IS_ADAPTER_ITEM = new Predicate<AnnotationMirror>() {
         @Override
-        public boolean apply(AnnotationMirror input) {
-            return Util.typeToString(input.getAnnotationType()).equals(ADAPTER_ITEM_NAME);
+        public boolean apply(final AnnotationMirror input) {
+            return Util.typeToString(input.getAnnotationType()).equals(ADAPTER_ITEM_ANNOTATION_NAME);
         }
 
         @Override
-        public boolean test(AnnotationMirror input) {
+        public boolean test(final AnnotationMirror input) {
             return apply(input);
         }
     };
+
     private static final Predicate<ExecutableElement> IS_ANNOTATION_VALUE = new Predicate<ExecutableElement>() {
         @Override
-        public boolean apply(ExecutableElement input) {
+        public boolean apply(final ExecutableElement input) {
             return "value".equals(input.getSimpleName().toString());
         }
 
         @Override
-        public boolean test(ExecutableElement input) {
+        public boolean test(final ExecutableElement input) {
             return apply(input);
         }
     };
+
     private static final Predicate<ExecutableElement> IS_VIEW_BINDER = new Predicate<ExecutableElement>() {
         @Override
-        public boolean apply(ExecutableElement input) {
+        public boolean apply(final ExecutableElement input) {
             return "viewBinder".equals(input.getSimpleName().toString());
         }
 
         @Override
-        public boolean test(ExecutableElement input) {
+        public boolean test(final ExecutableElement input) {
             return apply(input);
         }
     };
+
     private Types typeUtils;
     private Elements elementUtils;
     private Filer filer;
@@ -162,14 +174,17 @@ public class AutoAdapterProcessor extends AbstractProcessor {
         for (Map.Entry<String, List<TypeElement>> element : adaptersWithModels.entrySet()) {
             Map<TypeElement, ClassName> modelToFactory = new HashMap<>();
             for (TypeElement model : element.getValue()) {
-                AnnotationMirror annotation = Collections2.filter(model.getAnnotationMirrors(), IS_ADAPTER_ITEM).iterator().next();
-                Collection<? extends AnnotationValue> values = Maps.filterKeys(annotation.getElementValues(), IS_VIEW_BINDER).values();
+                AnnotationMirror annotation = Collections2.filter(model.getAnnotationMirrors(), IS_ADAPTER_ITEM)
+                                                          .iterator().next();
+                Collection<? extends AnnotationValue> values = Maps.filterKeys(annotation.getElementValues(),
+                        IS_VIEW_BINDER).values();
                 Optional<AnnotationValue> value;
-                if(values.isEmpty()) {
+                if (values.isEmpty()) {
                     value = Optional.absent();
                 } else {
                     value = Optional.of(values.iterator().next());
                 }
+
                 ViewHolderInfo viewHolderInfo = new ViewHolderInfo(model, typeUtils, elementUtils, messager, value);
                 viewHolderInfos.add(viewHolderInfo);
                 modelToFactory.put(model, viewHolderInfo.viewHolderFactoryClassName);
@@ -200,7 +215,7 @@ public class AutoAdapterProcessor extends AbstractProcessor {
             final RoundEnvironment roundEnvironment) {
         Map<String, List<TypeElement>> result = new HashMap<>();
 
-        TypeElement adapterItemElement = elementUtils.getTypeElement(ADAPTER_ITEM_NAME);
+        TypeElement adapterItemElement = elementUtils.getTypeElement(ADAPTER_ITEM_ANNOTATION_NAME);
         for (Element element : roundEnvironment.getElementsAnnotatedWith(adapterItemElement)) {
 
             if (element.getKind() != ElementKind.CLASS) {
@@ -209,14 +224,17 @@ public class AutoAdapterProcessor extends AbstractProcessor {
             }
 
             TypeElement typeElement = (TypeElement) element;
-            AnnotationMirror annotation = Collections2.filter(typeElement.getAnnotationMirrors(), IS_ADAPTER_ITEM).iterator().next();
-            AnnotationValue annotationValue = Maps.filterKeys(annotation.getElementValues(), IS_ANNOTATION_VALUE).values().iterator().next();
+            AnnotationMirror annotation = Collections2.filter(typeElement.getAnnotationMirrors(), IS_ADAPTER_ITEM)
+                                                      .iterator().next();
+            AnnotationValue annotationValue = Maps.filterKeys(annotation.getElementValues(), IS_ANNOTATION_VALUE)
+                                                  .values().iterator().next();
             Object value = annotationValue.getValue();
             List<TypeElement> strings = result.get(value.toString());
             if (strings == null) {
                 strings = new ArrayList<>();
                 result.put(value.toString(), strings);
             }
+
             strings.add(typeElement);
         }
 

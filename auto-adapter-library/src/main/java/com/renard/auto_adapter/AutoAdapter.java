@@ -52,10 +52,10 @@ abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
     }
 
     void addItem(final Unique item) {
-        items.add(item);
         for (int i = 0; i < items.size(); i++) {
             Unique currentItem = items.get(i);
             if (item.getId() == currentItem.getId()) {
+                items.set(i, item);
                 notifyItemChanged(i, item);
                 return;
             }
@@ -70,6 +70,7 @@ abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
     public void onBindViewHolder(final AutoAdapterViewHolder holder, final int position) {
         holder.bind(items.get(position));
     }
+
 
     @Override
     public int getItemViewType(final int position) {
