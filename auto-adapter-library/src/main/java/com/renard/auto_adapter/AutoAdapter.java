@@ -56,7 +56,7 @@ abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
             Unique currentItem = items.get(i);
             if (item.getId() == currentItem.getId()) {
                 items.set(i, item);
-                notifyItemChanged(i, item);
+                notifyItemChanged(i);
                 return;
             }
         }
