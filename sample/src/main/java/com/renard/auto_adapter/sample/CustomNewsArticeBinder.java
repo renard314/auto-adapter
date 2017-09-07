@@ -12,8 +12,8 @@ public class CustomNewsArticeBinder implements ViewBinder<NewsArticle> {
 
     @Override
     public void createView(final View view) {
-        headline = (TextView) view.findViewById(R.id.headline);
-        body = (TextView) view.findViewById(R.id.body);
+        headline = view.findViewById(R.id.headline);
+        body = view.findViewById(R.id.body);
     }
 
     @Override

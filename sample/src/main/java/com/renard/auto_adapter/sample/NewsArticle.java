@@ -18,4 +18,5 @@ public class NewsArticle implements Unique {
     public long getId() {
         return this.id;
     }
+
 }
