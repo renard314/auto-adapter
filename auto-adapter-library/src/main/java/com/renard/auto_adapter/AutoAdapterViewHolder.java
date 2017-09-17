@@ -1,7 +1,6 @@
 package com.renard.auto_adapter;
 
 import android.support.v7.widget.RecyclerView;
-
 import android.view.View;
 
 final class AutoAdapterViewHolder<ItemType extends Unique> extends RecyclerView.ViewHolder {

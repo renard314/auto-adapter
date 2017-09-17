@@ -1,13 +1,19 @@
 package com.renard.auto_adapter.processor;
 
-import static com.renard.auto_adapter.processor.AutoAdapterProcessor.ADAPTER_ITEM_ANNOTATION_NAME;
+import com.google.common.base.Optional;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Maps;
+import com.renard.auto_adapter.processor.code_generation.AdapterGenerator;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,29 +25,17 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-
 import javax.tools.Diagnostic;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Maps;
-
-import com.renard.auto_adapter.processor.code_generation.AdapterGenerator;
-
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.TypeSpec;
+import static com.renard.auto_adapter.processor.AutoAdapterProcessor.ADAPTER_ITEM_ANNOTATION_NAME;
 
 @SupportedAnnotationTypes(ADAPTER_ITEM_ANNOTATION_NAME)
 public class AutoAdapterProcessor extends AbstractProcessor {
@@ -49,51 +43,11 @@ public class AutoAdapterProcessor extends AbstractProcessor {
     public static final String LIBRARY_PACKAGE = "com.renard.auto_adapter";
     static final String ADAPTER_ITEM_ANNOTATION_NAME = "com.renard.auto_adapter.AdapterItem";
 
-    private static final Predicate<AnnotationMirror> IS_ADAPTER_ITEM = new Predicate<AnnotationMirror>() {
-        @Override
-        public boolean apply(final AnnotationMirror input) {
-            return Util.typeToString(input.getAnnotationType()).equals(ADAPTER_ITEM_ANNOTATION_NAME);
-        }
-
-        @Override
-        public boolean test(final AnnotationMirror input) {
-            return apply(input);
-        }
-    };
-
-    private static final Predicate<ExecutableElement> IS_ANNOTATION_VALUE = new Predicate<ExecutableElement>() {
-        @Override
-        public boolean apply(final ExecutableElement input) {
-            return "value".equals(input.getSimpleName().toString());
-        }
-
-        @Override
-        public boolean test(final ExecutableElement input) {
-            return apply(input);
-        }
-    };
-
-    private static final Predicate<ExecutableElement> IS_VIEW_BINDER = new Predicate<ExecutableElement>() {
-        @Override
-        public boolean apply(final ExecutableElement input) {
-            return "viewBinder".equals(input.getSimpleName().toString());
-        }
-
-        @Override
-        public boolean test(final ExecutableElement input) {
-            return apply(input);
-        }
-    };
-
     private Types typeUtils;
     private Elements elementUtils;
     private Filer filer;
     private Messager messager;
-    private Set<ViewHolderInfo> viewHolderInfos = new LinkedHashSet<>();
-
-    public AutoAdapterProcessor() {
-        super();
-    }
+    private Set<AnnotatedModel> annotatedModelses = new LinkedHashSet<>();
 
     @Override
     public synchronized void init(final ProcessingEnvironment processingEnvironment) {
@@ -107,65 +61,37 @@ public class AutoAdapterProcessor extends AbstractProcessor {
     @Override
     public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnvironment) {
 
-        if (!viewHolderInfos.isEmpty()) {
-            generateViewBindersAndFactories(roundEnvironment);
-        } else {
-            generateAdapters(roundEnvironment);
-        }
-
-        return true;
-    }
-
-    /**
-     * generate adapters and prepare to generate the ViewHolders and ViewHolderFactories.
-     */
-    private void generateAdapters(final RoundEnvironment roundEnvironment) {
-        Map<String, List<TypeElement>> adaptersWithModels = findAllClassesAnnotatedWithAdapterItem(roundEnvironment);
-        if (adaptersWithModels.isEmpty()) {
-            return;
-        }
-
-        List<TypeSpec> typeSpecs = generateAdapters(adaptersWithModels);
-
-        saveGeneratedTypes(typeSpecs);
-    }
-
-    /**
-     * generate the ViewHolders and ViewHolderFactories.
-     */
-    private void generateViewBindersAndFactories(final RoundEnvironment roundEnvironment) {
-        List<TypeSpec> typeSpecs = generateViewBindersAndFactories(roundEnvironment.getRootElements());
-        viewHolderInfos.clear();
-        saveGeneratedTypes(typeSpecs);
-    }
-
-    private List<TypeSpec> generateViewBindersAndFactories(final Set<? extends Element> rootElements) {
-
         List<TypeSpec> typeSpecs = new ArrayList<>();
+        boolean hasProcessedAnnotation = false;
 
-        for (ViewHolderInfo viewHolderInfo : viewHolderInfos) {
-
-            if (viewHolderInfo.hasCustomViewBinder()) {
-
-                TypeSpec viewHolderFactory = viewHolderInfo.generateViewHolderFactory();
-                typeSpecs.add(viewHolderFactory);
-
-            } else {
-
-                Optional<Element> classNameForDataBinding = viewHolderInfo.findDataBindingForModel(rootElements);
-                if (!classNameForDataBinding.isPresent()) {
-                    return Collections.emptyList();
-                }
-
-                TypeSpec viewHolderFactory = viewHolderInfo.generateViewHolderFactory(classNameForDataBinding.get());
-                TypeSpec viewBinder = viewHolderInfo.generateViewBinder(classNameForDataBinding.get());
-
-                typeSpecs.add(viewBinder);
-                typeSpecs.add(viewHolderFactory);
-            }
+        if (!annotations.isEmpty()) {
+            List<TypeSpec> adapters = generateAdapters(roundEnvironment);
+            typeSpecs.addAll(adapters);
+            hasProcessedAnnotation = !adapters.isEmpty();
         }
 
-        return typeSpecs;
+        for (Iterator<AnnotatedModel> iterator = annotatedModelses.iterator(); iterator.hasNext(); ) {
+            AnnotatedModel annotatedModel = iterator.next();
+            List<TypeSpec> spec = annotatedModel.generateTypeSpecs(roundEnvironment);
+            if (!spec.isEmpty()) {
+                iterator.remove();
+                typeSpecs.addAll(spec);
+            }
+
+        }
+
+        saveGeneratedTypes(typeSpecs);
+
+        return hasProcessedAnnotation;
+    }
+
+    private List<TypeSpec> generateAdapters(final RoundEnvironment roundEnvironment) {
+        Map<String, List<TypeElement>> adapterNamesToModels = findAllClassesAnnotatedWithAdapterItem(roundEnvironment);
+        if (adapterNamesToModels.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return generateAdapters(adapterNamesToModels);
     }
 
     private List<TypeSpec> generateAdapters(final Map<String, List<TypeElement>> adaptersWithModels) {
@@ -174,20 +100,29 @@ public class AutoAdapterProcessor extends AbstractProcessor {
         for (Map.Entry<String, List<TypeElement>> element : adaptersWithModels.entrySet()) {
             Map<TypeElement, ClassName> modelToFactory = new HashMap<>();
             for (TypeElement model : element.getValue()) {
-                AnnotationMirror annotation = Collections2.filter(model.getAnnotationMirrors(), IS_ADAPTER_ITEM)
-                                                          .iterator().next();
+
+                AnnotationMirror annotation = Collections2.filter(model.getAnnotationMirrors(), Predicates.IS_ADAPTER_ITEM)
+                        .iterator().next();
                 Collection<? extends AnnotationValue> values = Maps.filterKeys(annotation.getElementValues(),
-                        IS_VIEW_BINDER).values();
+                        Predicates.IS_VIEW_BINDER).values();
+
+
                 Optional<AnnotationValue> value;
                 if (values.isEmpty()) {
                     value = Optional.absent();
                 } else {
-                    value = Optional.of(values.iterator().next());
+                    AnnotationValue firstValue = values.iterator().next();
+                    if (firstValue.getValue().equals("<error>")) {
+                        messager.printMessage(Diagnostic.Kind.ERROR, "Specified ViewBinder is not a class.", model, annotation);
+                        return Collections.emptyList();
+                    }
+                    value = Optional.of(firstValue);
+
                 }
 
-                ViewHolderInfo viewHolderInfo = new ViewHolderInfo(model, typeUtils, elementUtils, messager, value);
-                viewHolderInfos.add(viewHolderInfo);
-                modelToFactory.put(model, viewHolderInfo.viewHolderFactoryClassName);
+                AnnotatedModel annotatedModel = new AnnotatedModel(model, typeUtils, elementUtils, messager, value);
+                annotatedModelses.add(annotatedModel);
+                modelToFactory.put(model, annotatedModel.viewHolderFactoryClassName);
             }
 
             AdapterGenerator adapterGenerator = new AdapterGenerator(element.getKey(), modelToFactory);
@@ -206,6 +141,7 @@ public class AutoAdapterProcessor extends AbstractProcessor {
             try {
                 file.writeTo(filer);
             } catch (IOException e) {
+                messager.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -224,10 +160,10 @@ public class AutoAdapterProcessor extends AbstractProcessor {
             }
 
             TypeElement typeElement = (TypeElement) element;
-            AnnotationMirror annotation = Collections2.filter(typeElement.getAnnotationMirrors(), IS_ADAPTER_ITEM)
-                                                      .iterator().next();
-            AnnotationValue annotationValue = Maps.filterKeys(annotation.getElementValues(), IS_ANNOTATION_VALUE)
-                                                  .values().iterator().next();
+            AnnotationMirror annotation = Collections2.filter(typeElement.getAnnotationMirrors(), Predicates.IS_ADAPTER_ITEM)
+                    .iterator().next();
+            AnnotationValue annotationValue = Maps.filterKeys(annotation.getElementValues(),
+                    Predicates.IS_ANNOTATION_VALUE).values().iterator().next();
             Object value = annotationValue.getValue();
             List<TypeElement> strings = result.get(value.toString());
             if (strings == null) {
