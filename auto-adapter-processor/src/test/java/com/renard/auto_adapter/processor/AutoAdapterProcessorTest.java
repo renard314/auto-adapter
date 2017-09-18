@@ -1,34 +1,10 @@
 package com.renard.auto_adapter.processor;
 
-import android.support.annotation.NonNull;
-
-import com.google.common.collect.Lists;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-
 import org.junit.Test;
 
-import java.util.List;
-
-import javax.tools.JavaFileObject;
-
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.Compiler.javac;
+import static com.renard.auto_adapter.processor.Given.*;
 
 public class AutoAdapterProcessorTest {
-
-    private JavaFileObject viewHolderFactory = JavaFileObjects.forResource("ViewHolderFactory.java");
-    private JavaFileObject recyclerView = JavaFileObjects.forResource("android/RecyclerView.java");
-    private JavaFileObject autoAdapter = JavaFileObjects.forResource("AutoAdapter.java");
-    private JavaFileObject autoAdapterViewHolder = JavaFileObjects.forResource("AutoAdapterViewHolder.java");
-    private JavaFileObject adapterItem = JavaFileObjects.forResource("AdapterItem.java");
-    private JavaFileObject unique = JavaFileObjects.forResource("Unique.java");
-    private JavaFileObject viewBinder = JavaFileObjects.forResource("ViewBinder.java");
-
-    private JavaFileObject[] libraryFiles = {
-            viewBinder, adapterItem, unique, autoAdapter, recyclerView, autoAdapterViewHolder, viewHolderFactory
-    };
-
 
     @Test
     public void testMoreThanOneDataBindingAvailable() {
@@ -143,59 +119,4 @@ public class AutoAdapterProcessorTest {
     }
 
 
-    @NonNull
-    private TestSubject givenJavaFileObjects(String... sourceFiles) {
-        List<JavaFileObject> javaFileObjects = Lists.newArrayList(libraryFiles);
-        for (String sourceFile : sourceFiles) {
-            javaFileObjects.add(JavaFileObjects.forResource(sourceFile));
-        }
-        return new TestSubject(javaFileObjects);
-    }
-
-    private static class TestSubject {
-
-        private final List<JavaFileObject> javaFileObjects;
-        private Compilation compilation;
-
-        TestSubject(List<JavaFileObject> javaFileObjects) {
-
-            this.javaFileObjects = javaFileObjects;
-        }
-
-        TestSubject whenCompiled() {
-            compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-            return this;
-        }
-
-        TestSubject thenCompilationSucceeded() {
-            assertThat(compilation).succeeded();
-            return this;
-        }
-
-        TestSubject thenCompilationFailed() {
-            assertThat(compilation).failed();
-            return this;
-        }
-
-        TestSubject withErrors(String... errorStrings) {
-            for (String error : errorStrings) {
-                assertThat(compilation).hadErrorContaining(error);
-            }
-            return this;
-        }
-
-        TestSubject withGeneratedSourceFiles(String... sourceFile) {
-            for (String file : sourceFile) {
-                assertThat(compilation).generatedSourceFile(file);
-            }
-            return this;
-        }
-
-        TestSubject withWarning(String... warnings) {
-            for (String warning : warnings) {
-                assertThat(compilation).hadWarningContaining(warning);
-            }
-            return this;
-        }
-    }
 }
