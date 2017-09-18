@@ -2,7 +2,7 @@ package com.renard.auto_adapter.processor;
 
 import org.junit.Test;
 
-import static com.renard.auto_adapter.processor.Given.*;
+import static com.renard.auto_adapter.processor.Given.givenJavaFileObjects;
 
 public class AutoAdapterProcessorTest {
 

@@ -11,7 +11,6 @@ import java.util.List;
 
 import javax.tools.JavaFileObject;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 
 class Given {
