@@ -1,12 +1,13 @@
 package com.renard.auto_adapter.processor;
 
+import android.support.annotation.NonNull;
+
 import com.google.common.collect.Lists;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.tools.JavaFileObject;
@@ -31,140 +32,170 @@ public class AutoAdapterProcessorTest {
 
     @Test
     public void testMoreThanOneDataBindingAvailable() {
-        JavaFileObject model = JavaFileObjects.forResource("twoDataBindingAvailable/Model.java");
-        JavaFileObject binding1 = JavaFileObjects.forResource("twoDataBindingAvailable/DataBinding1.java");
-        JavaFileObject binding2 = JavaFileObjects.forResource("twoDataBindingAvailable/DataBinding2.java");
-        JavaFileObject viewDataBinding = JavaFileObjects.forResource("android/ViewDataBinding.java");
-        List<JavaFileObject> javaFileObjects = Lists.newArrayList(model, binding1,
-                binding2, viewDataBinding);
-        Collections.addAll(javaFileObjects, libraryFiles);
-
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-
-        assertThat(compilation).failed();
-        assertThat(compilation).hadErrorContaining("Can't find ViewDataBinding for Model");
-        assertThat(compilation).hadWarningContaining("There is more than one ViewDataBinding for Model");
+        givenJavaFileObjects(
+                "twoDataBindingAvailable/Model.java",
+                "twoDataBindingAvailable/DataBinding1.java",
+                "twoDataBindingAvailable/DataBinding2.java",
+                "android/ViewDataBinding.java")
+                .whenCompiled()
+                .thenCompilationFailed()
+                .withErrors("Can't find ViewDataBinding for Model")
+                .withWarning("There is more than one ViewDataBinding for Model");
     }
 
     @Test
     public void testDataBindingHasMoreThanOneVariable() {
-        JavaFileObject model1 = JavaFileObjects.forResource("dataBindingHasTwoVariables/Model1.java");
-        JavaFileObject model2 = JavaFileObjects.forResource("dataBindingHasTwoVariables/Model2.java");
-        JavaFileObject binding = JavaFileObjects.forResource("dataBindingHasTwoVariables/DataBinding.java");
-        JavaFileObject viewDataBinding = JavaFileObjects.forResource("android/ViewDataBinding.java");
-        List<JavaFileObject> javaFileObjects = Lists.newArrayList(model1, model2, binding, viewDataBinding);
-        Collections.addAll(javaFileObjects, libraryFiles);
-
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-
-        assertThat(compilation).failed();
-        assertThat(compilation).hadErrorContaining("Can't find ViewDataBinding for Model");
-        assertThat(compilation).hadWarningContaining("ViewDataBinding for Model1 has more than one variable");
+        givenJavaFileObjects(
+                "dataBindingHasTwoVariables/Model1.java",
+                "dataBindingHasTwoVariables/Model2.java",
+                "dataBindingHasTwoVariables/DataBinding.java",
+                "android/ViewDataBinding.java")
+                .whenCompiled()
+                .thenCompilationFailed()
+                .withErrors("Can't find ViewDataBinding for Model")
+                .withWarning("ViewDataBinding for Model1 has more than one variable");
     }
 
     @Test
     public void testMixDatabBindingAndCustomBinding() {
-        JavaFileObject model1 = JavaFileObjects.forResource("mixDataBinding/Model1.java");
-        JavaFileObject model2 = JavaFileObjects.forResource("mixDataBinding/Model2.java");
-        JavaFileObject model1Binding = JavaFileObjects.forResource("mixDataBinding/Model1DataBinding.java");
-        JavaFileObject model2Binding = JavaFileObjects.forResource("mixDataBinding/Model2Binder.java");
-        JavaFileObject viewDataBinding = JavaFileObjects.forResource("android/ViewDataBinding.java");
-
-        List<JavaFileObject> javaFileObjects = Lists.newArrayList(model1, model2,
-                model1Binding, model2Binding, viewDataBinding);
-        Collections.addAll(javaFileObjects, libraryFiles);
-
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-
-        assertThat(compilation).succeeded();
-        assertThat(compilation).generatedSourceFile("com.renard.auto_adapter.Adapter");
-
+        givenJavaFileObjects(
+                "mixDataBinding/Model1.java",
+                "mixDataBinding/Model2.java",
+                "mixDataBinding/Model1DataBinding.java",
+                "mixDataBinding/Model2Binder.java",
+                "android/ViewDataBinding.java")
+                .whenCompiled()
+                .thenCompilationSucceeded()
+                .withGeneratedSourceFiles("com.renard.auto_adapter.Adapter");
     }
 
     @Test
     public void testModelIsInnerClass() {
-        JavaFileObject model = JavaFileObjects.forResource("modelIsInnerClass/Binder.java");
-        List<JavaFileObject> javaFileObjects = Lists.asList(model, libraryFiles);
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-        assertThat(compilation).succeeded();
-        assertThat(compilation).generatedSourceFile("com.renard.auto_adapter.Adapter");
+        givenJavaFileObjects("modelIsInnerClass/Binder.java")
+                .whenCompiled()
+                .thenCompilationSucceeded()
+                .withGeneratedSourceFiles("com.renard.auto_adapter.Adapter");
     }
 
     @Test
     public void testGenerateTwoAdapters() {
-        JavaFileObject model1 = JavaFileObjects.forResource("twoAdapters/Model1.java");
-        JavaFileObject model2 = JavaFileObjects.forResource("twoAdapters/Model2.java");
-        List<JavaFileObject> javaFileObjects = Lists.asList(model1, model2, libraryFiles);
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-        assertThat(compilation).succeeded();
-        assertThat(compilation).generatedSourceFile("com.renard.auto_adapter.Adapter1");
-        assertThat(compilation).generatedSourceFile("com.renard.auto_adapter.Adapter2");
+        givenJavaFileObjects(
+                "twoAdapters/Model1.java",
+                "twoAdapters/Model2.java")
+                .whenCompiled()
+                .thenCompilationSucceeded()
+                .withGeneratedSourceFiles(
+                        "com.renard.auto_adapter.Adapter1",
+                        "com.renard.auto_adapter.Adapter2");
     }
 
     @Test
     public void testGenerateWithWrongViewBinder() {
-        JavaFileObject model1 = JavaFileObjects.forResource("wrongViewBinder/Model.java");
-        List<JavaFileObject> javaFileObjects = Lists.asList(model1, libraryFiles);
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-        assertThat(compilation).failed();
-        assertThat(compilation).hadErrorContaining("Specified ViewBinder is not a class.");
+        givenJavaFileObjects("wrongViewBinder/Model.java")
+                .whenCompiled()
+                .thenCompilationFailed()
+                .withErrors("Specified ViewBinder is not a class.");
     }
 
     @Test
     public void testModelIsBinder() {
-        JavaFileObject modelAsBinder = JavaFileObjects.forResource("modelIsBinder/Model.java");
-        List<JavaFileObject> javaFileObjects = Lists.asList(modelAsBinder, libraryFiles);
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-        assertThat(compilation).succeeded();
+        givenJavaFileObjects("modelIsBinder/Model.java")
+                .whenCompiled()
+                .thenCompilationSucceeded();
     }
 
     @Test
     public void testCompileWithDataBinding() {
-        JavaFileObject advertisement = JavaFileObjects.forResource("modelWithDataBinding/Model.java");
-        JavaFileObject viewDataBinding = JavaFileObjects.forResource("android/ViewDataBinding.java");
-        JavaFileObject advertisementItemBinding = JavaFileObjects.forResource("modelWithDataBinding/ModelDataBinding.java");
-        List<JavaFileObject> javaFileObjects = Lists.newArrayList(advertisement, viewDataBinding,
-                advertisementItemBinding);
-        Collections.addAll(javaFileObjects, libraryFiles);
-
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-
-        assertThat(compilation).succeeded();
+        givenJavaFileObjects(
+                "modelWithDataBinding/Model.java",
+                "android/ViewDataBinding.java",
+                "modelWithDataBinding/ModelDataBinding.java")
+                .whenCompiled()
+                .thenCompilationSucceeded();
     }
 
     @Test
     public void testCompileWithoutDataBinding() {
-        JavaFileObject newsArticle = JavaFileObjects.forResource("modelWithDataBinding/Model.java");
-        List<JavaFileObject> javaFileObjects = Lists.asList(newsArticle, libraryFiles);
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-
-        assertThat(compilation).failed();
-        assertThat(compilation).hadErrorContaining("Can't find ViewDataBinding for Model");
+        givenJavaFileObjects("modelWithDataBinding/Model.java")
+                .whenCompiled()
+                .thenCompilationFailed()
+                .withErrors("Can't find ViewDataBinding for Model");
     }
 
     @Test
     public void testCompileOneModelWithViewBinding() {
-        JavaFileObject newsArticle = JavaFileObjects.forResource("modelWithCustomBinding/Model.java");
-        JavaFileObject binder = JavaFileObjects.forResource("modelWithCustomBinding/ModelBinder.java");
-        List<JavaFileObject> javaFileObjects = Lists.asList(newsArticle, binder, libraryFiles);
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-
-        assertThat(compilation).succeeded();
+        givenJavaFileObjects(
+                "modelWithCustomBinding/Model.java",
+                "modelWithCustomBinding/ModelBinder.java")
+                .whenCompiled()
+                .thenCompilationSucceeded();
     }
 
     @Test
     public void testCompileTwoModelslWithViewBinding() {
-        JavaFileObject newsArticle = JavaFileObjects.forResource("twoModelsWithCustomBinding/Model1.java");
-        JavaFileObject binder = JavaFileObjects.forResource("twoModelsWithCustomBinding/Model1Binder.java");
-        JavaFileObject advertisement = JavaFileObjects.forResource("twoModelsWithCustomBinding/Model2.java");
-        JavaFileObject advertisementBinder = JavaFileObjects.forResource("twoModelsWithCustomBinding/Model2Binder.java");
-
-        List<JavaFileObject> javaFileObjects = Lists.newArrayList(newsArticle, binder, advertisement,
-                advertisementBinder);
-        Collections.addAll(javaFileObjects, libraryFiles);
-
-        Compilation compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
-        assertThat(compilation).succeeded();
+        givenJavaFileObjects(
+                "twoModelsWithCustomBinding/Model1.java",
+                "twoModelsWithCustomBinding/Model1Binder.java",
+                "twoModelsWithCustomBinding/Model2.java",
+                "twoModelsWithCustomBinding/Model2Binder.java")
+                .whenCompiled()
+                .thenCompilationSucceeded();
     }
 
+
+    @NonNull
+    private TestSubject givenJavaFileObjects(String... sourceFiles) {
+        List<JavaFileObject> javaFileObjects = Lists.newArrayList(libraryFiles);
+        for (String sourceFile : sourceFiles) {
+            javaFileObjects.add(JavaFileObjects.forResource(sourceFile));
+        }
+        return new TestSubject(javaFileObjects);
+    }
+
+    private static class TestSubject {
+
+        private final List<JavaFileObject> javaFileObjects;
+        private Compilation compilation;
+
+        TestSubject(List<JavaFileObject> javaFileObjects) {
+
+            this.javaFileObjects = javaFileObjects;
+        }
+
+        TestSubject whenCompiled() {
+            compilation = javac().withProcessors(new AutoAdapterProcessor()).compile(javaFileObjects);
+            return this;
+        }
+
+        TestSubject thenCompilationSucceeded() {
+            assertThat(compilation).succeeded();
+            return this;
+        }
+
+        TestSubject thenCompilationFailed() {
+            assertThat(compilation).failed();
+            return this;
+        }
+
+        TestSubject withErrors(String... errorStrings) {
+            for (String error : errorStrings) {
+                assertThat(compilation).hadErrorContaining(error);
+            }
+            return this;
+        }
+
+        TestSubject withGeneratedSourceFiles(String... sourceFile) {
+            for (String file : sourceFile) {
+                assertThat(compilation).generatedSourceFile(file);
+            }
+            return this;
+        }
+
+        TestSubject withWarning(String... warnings) {
+            for (String warning : warnings) {
+                assertThat(compilation).hadWarningContaining(warning);
+            }
+            return this;
+        }
+    }
 }
