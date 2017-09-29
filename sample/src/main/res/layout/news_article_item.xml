@@ -17,6 +17,7 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/headline"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="24dp"
             android:gravity="center"
@@ -27,6 +28,7 @@
             tools:text="Headline"/>
 
         <TextView
+            android:id="@+id/body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@{newsArticle.body}"

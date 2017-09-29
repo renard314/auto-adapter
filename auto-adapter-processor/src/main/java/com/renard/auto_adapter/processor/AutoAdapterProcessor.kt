@@ -150,27 +150,30 @@ class AutoAdapterProcessor : AbstractProcessor() {
         //all click listeners for this model
         val methodsForThis: List<Element> = methodsWithOnClick.filter {
             val method = it as ExecutableElement
-            if (it.parameters.size == 2) {
-                val viewParamsCount = it.parameters.count { it.isAndroidView() }
-                val modelParamsCount = method.parameters.count { it.isAnnotatedModel(model) }
-                viewParamsCount == 1 && modelParamsCount == 1
-                true
-            } else if (it.parameters.size == 1) {
-                it.parameters.first().isAndroidView() || it.parameters.first().isAnnotatedModel(model)
-            } else {
-                false
+            when {
+                method.parameters.size == 2 -> {
+                    val viewParamsCount = method.parameters.count { it.isAndroidView() }
+                    val modelParamsCount = method.parameters.count { it.isAnnotatedModel(model) }
+                    viewParamsCount == 1 && modelParamsCount == 1
+                }
+                method.parameters.size == 1 -> {
+                    method.parameters.first().isAndroidView() || method.parameters.first().isAnnotatedModel(model)
+                }
+                else -> {
+                    method.parameters.isEmpty()
+                }
             }
         }
-        methodsWithOnClick.removeAll(methodsForThis)
 
         //get all viewIds for this model
-        return methodsForThis.flatMap {
-            val method = it as ExecutableElement
-            val clickAnnotation = method.annotationMirrors
-                    .first { Util.typeToString(it.annotationType) == ON_CLICK_ANNOTATION_NAME }
+        return methodsForThis.flatMap { method ->
+            val clickAnnotations = method.annotationMirrors
+                    .filter { Util.typeToString(it.annotationType) == ON_CLICK_ANNOTATION_NAME }
 
             val valueListener = IntAnnotationValueVisitor()
-            clickAnnotation.elementValues.filterKeys { "value" == it.simpleName.toString() }.values.first().accept(valueListener, null)
+            clickAnnotations.forEach {
+                it.elementValues.filterKeys { "value" == it.simpleName.toString() }.values.first().accept(valueListener, null)
+            }
             valueListener.ids
         }.toSet()
     }

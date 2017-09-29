@@ -25,6 +25,12 @@ public class MainActivity extends AppCompatActivity {
         addModelsToAdapter();
     }
 
+    @OnClick(R.id.headline)
+    public void onTitleClicked() {
+        Toast.makeText(this, " onTitleClicked was called", Toast.LENGTH_LONG).show();
+    }
+
+
     @OnClick(R.id.body)
     public void onBodyClicked() {
         Toast.makeText(this, " onBodyClicked was called", Toast.LENGTH_LONG).show();

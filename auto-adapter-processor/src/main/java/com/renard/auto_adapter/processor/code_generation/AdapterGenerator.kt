@@ -75,6 +75,7 @@ class AdapterGenerator(private val adapterName: String, private val modelToFacto
 
 
                 }
+                code.add("break;\n")
                 code.endControlFlow()
             }
             code.endControlFlow()
