@@ -26,21 +26,25 @@ public class RecyclerView {
 
         public abstract long getItemId(final int position);
 
-
         public void setHasStableIds(boolean hasStableIds) {
-
         }
 
         public void notifyItemRemoved(int index) {
+        }
 
+        public void notifyItemRangeRemoved(int index, int count){
         }
 
         public void notifyItemChanged(int index) {
-
         }
 
         public void notifyItemInserted(int index) {
+        }
 
+        public void onViewDetachedFromWindow(final VH holder) {
+        }
+
+        public void onViewAttachedToWindow(final VH holder) {
         }
     }
 }

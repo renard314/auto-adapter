@@ -22,9 +22,10 @@ class Given {
     private JavaFileObject adapterItem = JavaFileObjects.forResource("AdapterItem.java");
     private JavaFileObject unique = JavaFileObjects.forResource("Unique.java");
     private JavaFileObject viewBinder = JavaFileObjects.forResource("ViewBinder.java");
+    private JavaFileObject onClick = JavaFileObjects.forResource("OnClick.java");
 
     private JavaFileObject[] libraryFiles = {
-            viewBinder, adapterItem, unique, autoAdapter, recyclerView, autoAdapterViewHolder, viewHolderFactory
+            viewBinder, adapterItem, unique, autoAdapter, recyclerView, autoAdapterViewHolder, viewHolderFactory, onClick
     };
 
     private final List<JavaFileObject> javaFileObjects = Lists.newArrayList(libraryFiles);

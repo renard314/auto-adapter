@@ -16,36 +16,6 @@ class AdapterGenerator(private val adapterName: String, private val modelToFacto
         return adapterBuilder.build()
     }
 
-    //    void onClickItem(final View view, final Object item, final Object listener) {
-    //        if (listener instanceof MainActivity) {
-    //            switch (view.getId()) {
-    //
-    //                case R.id.body : {
-    //                    ((MainActivity) listener).onNewsArticleClicked((NewsArticle) item);
-    //                    return;
-    //                }
-    //             }
-//             }
-    //
-    //        if (item instanceof Advertisement) {
-    //                switch (view.getId()) {
-    //
-    //                    case com.renard.auto_adapter.sample.R.id.body : {
-    //                          if(item instanceOf Advertisement) {
-    //                        ((MainActivity) listener).onAdClick(view, (Advertisement) item);
-    //                        ((MainActivity) listener).onAdClick2(view, (Advertisement) item);
-    //                        return;
-    //                    }
-    //
-    //                    case R.id.advertisement : {
-    //                        ((MainActivity) listener).onAdClick(view, (Advertisement) item);
-    //                        return;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //        return;
-    //    }
     private fun addOnCLickItemMethod(adapterBuilder: TypeSpec.Builder) {
         val code = CodeBlock.builder()
         listenersWithMethods.forEach { listener, methods ->
