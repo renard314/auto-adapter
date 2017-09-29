@@ -3,6 +3,7 @@ package com.renard.auto_adapter;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
@@ -43,14 +44,34 @@ public class AutoAdapterTest {
 
     private Model1 model1 = new Model1(0);
     private Model2 model2 = new Model2(1);
-    private AutoAdapterViewHolder<Model1> model1ViewHolder = new AutoAdapterViewHolder<>(new LinearLayout(InstrumentationRegistry.getContext()), null);
+    private int[] viewIds = {};
+    private AutoAdapterViewHolder<Model1> model1ViewHolder = new AutoAdapterViewHolder<>(new LinearLayout(InstrumentationRegistry.getContext()), null, viewIds);
     private AutoAdapter autoAdapter = new AutoAdapter() {
+        @Override
+        void onClickItem(View view, Object item, Object listener) {
+
+        }
     };
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        model1ViewHolder = new AutoAdapterViewHolder<>(view, model1ViewBinder);
+        model1ViewHolder = new AutoAdapterViewHolder<>(view, model1ViewBinder, viewIds);
+    }
+
+    @Test
+    public void testClear() {
+        givenAdapterFor2Models();
+
+        whenModelIsAdded(model1);
+        whenModelIsAdded(model2);
+        whenAdapterIsClearedI();
+        thenObserversGetNotifiedAboutRemoval(0, 2);
+    }
+
+
+    private void whenAdapterIsClearedI() {
+        autoAdapter.clearItems();
     }
 
     @Test
@@ -171,13 +192,17 @@ public class AutoAdapterTest {
 
     private AutoAdapter givenAdapterFor2Models() {
         autoAdapter = new AutoAdapter() {
+            @Override
+            void onClickItem(View view, Object item, Object listener) {
+
+            }
         };
         autoAdapter.registerAdapterDataObserver(adapterDataObserver);
 
         when(model1ViewHolderFactory.getViewType()).thenReturn(MODEL_1_VIEW_TYPE);
         when(model2ViewHolderFactory.getViewType()).thenReturn(MODEL_2_VIEW_TYPE);
-        when(model1ViewHolderFactory.create(Matchers.<ViewGroup>any())).thenReturn(new AutoAdapterViewHolder<>(view, model1ViewBinder));
-        when(model2ViewHolderFactory.create(Matchers.<ViewGroup>any())).thenReturn(new AutoAdapterViewHolder<>(view, model2ViewBinder));
+        when(model1ViewHolderFactory.create(Matchers.<ViewGroup>any())).thenReturn(new AutoAdapterViewHolder<>(view, model1ViewBinder, viewIds));
+        when(model2ViewHolderFactory.create(Matchers.<ViewGroup>any())).thenReturn(new AutoAdapterViewHolder<>(view, model2ViewBinder, viewIds));
 
         autoAdapter.putMapping(Model1.class, model1ViewHolderFactory);
         autoAdapter.putMapping(Model2.class, model2ViewHolderFactory);
@@ -211,6 +236,12 @@ public class AutoAdapterTest {
     private void thenObserversGetNotifiedAboutInsertionAt(final int index) {
         thenObserversGetNotifiedAboutInsertionAt(index, 1);
     }
+
+    private void thenObserversGetNotifiedAboutRemoval(int index, int count) {
+        verify(adapterDataObserver).onItemRangeRemoved(eq(index), eq(count));
+
+    }
+
 
     private void thenObserversGetNotifiedAboutInsertionAt(final int index, final int count) {
         verify(adapterDataObserver).onItemRangeInserted(eq(index), eq(count));

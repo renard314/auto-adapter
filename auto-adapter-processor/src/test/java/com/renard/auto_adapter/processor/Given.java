@@ -47,5 +47,4 @@ class Given {
         return new When(compilation);
     }
 
-
 }

@@ -1,7 +1,5 @@
 package com.renard.auto_adapter.processor;
 
-import com.google.common.base.Predicate;
-
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -9,9 +7,11 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-import static com.renard.auto_adapter.processor.AutoAdapterProcessor.ADAPTER_ITEM_ANNOTATION_NAME;
+import com.google.common.base.Predicate;
 
 final class Predicates {
+    private static final String VIEW_DATA_BINDING = "android.databinding.ViewDataBinding";
+
     static final Predicate<ExecutableElement> IS_VOID_METHOD = new MyPredicate<ExecutableElement>() {
 
         @Override
@@ -19,6 +19,7 @@ final class Predicates {
             return input.getReturnType().getKind() == TypeKind.VOID;
         }
     };
+
     static final Predicate<ExecutableElement> HAS_ONE_PARAMETER = new MyPredicate<ExecutableElement>() {
         @Override
         public boolean test(final ExecutableElement input) {
@@ -26,32 +27,43 @@ final class Predicates {
         }
 
     };
+
     static final Predicate<ExecutableElement> STARTS_WITH_SET = new MyPredicate<ExecutableElement>() {
         @Override
         public boolean test(final ExecutableElement input) {
             return input.getSimpleName().toString().startsWith("set");
         }
     };
+
     static final Predicate<ExecutableElement> IS_ANNOTATION_VALUE = new MyPredicate<ExecutableElement>() {
         @Override
         public boolean test(final ExecutableElement input) {
             return "value".equals(input.getSimpleName().toString());
         }
     };
+
     static final Predicate<ExecutableElement> IS_VIEW_BINDER = new MyPredicate<ExecutableElement>() {
         @Override
         public boolean test(final ExecutableElement input) {
             return "viewBinder".equals(input.getSimpleName().toString());
         }
     };
+
     static final Predicate<AnnotationMirror> IS_ADAPTER_ITEM = new MyPredicate<AnnotationMirror>() {
         @Override
         public boolean test(final AnnotationMirror input) {
-            return Util.typeToString(input.getAnnotationType()).equals(ADAPTER_ITEM_ANNOTATION_NAME);
+            return Util.typeToString(input.getAnnotationType()).equals(
+                    AutoAdapterProcessor.ADAPTER_ITEM_ANNOTATION_NAME);
         }
-
     };
-    private static final String VIEW_DATA_BINDING = "android.databinding.ViewDataBinding";
+
+    static final Predicate<AnnotationMirror> IS_ON_CLICK = new MyPredicate<AnnotationMirror>() {
+        @Override
+        public boolean test(final AnnotationMirror input) {
+            return Util.typeToString(input.getAnnotationType()).equals(AutoAdapterProcessor.ON_CLICK_ANNOTATION_NAME);
+        }
+    };
+
     static final Predicate<TypeMirror> IS_VIEW_DATA_BINDING = new MyPredicate<TypeMirror>() {
 
         @Override
@@ -74,11 +86,12 @@ final class Predicates {
         };
     }
 
-    private static abstract class MyPredicate<T> implements Predicate<T> {
+    private abstract static class MyPredicate<T> implements Predicate<T> {
 
         @Override
-        public boolean apply(T input) {
+        public boolean apply(final T input) {
             return test(input);
         }
     }
+
 }

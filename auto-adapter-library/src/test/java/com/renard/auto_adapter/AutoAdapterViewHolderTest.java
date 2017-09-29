@@ -34,7 +34,7 @@ public class AutoAdapterViewHolderTest {
     @Test
     public void bind_should_call_binder() {
         TestItem testItem = new TestItem();
-        AutoAdapterViewHolder<TestItem> viewHolder = new AutoAdapterViewHolder<>(view, binder);
+        AutoAdapterViewHolder<TestItem> viewHolder = new AutoAdapterViewHolder<>(view, binder, new int[]{});
         viewHolder.bind(testItem);
         verify(binder).bind(eq(testItem));
     }
