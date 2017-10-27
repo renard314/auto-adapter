@@ -28,7 +28,7 @@ abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
         }
     };
 
-    abstract void onClickItem(View view, Object item, Object listener);
+    protected abstract void onClickItem(View view, Object item, Object listener);
 
     AutoAdapter() {
         setHasStableIds(true);
@@ -86,7 +86,7 @@ abstract class AutoAdapter extends RecyclerView.Adapter<AutoAdapterViewHolder> {
         notifyItemInserted(items.size() - 1);
     }
 
-    public void registerForEvents(@NonNull final Object listener) {
+    void registerForEvents(@NonNull final Object listener) {
         listeners.add(listener);
     }
 

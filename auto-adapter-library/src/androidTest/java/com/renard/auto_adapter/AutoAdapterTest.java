@@ -48,7 +48,7 @@ public class AutoAdapterTest {
     private AutoAdapterViewHolder<Model1> model1ViewHolder = new AutoAdapterViewHolder<>(new LinearLayout(InstrumentationRegistry.getContext()), null, viewIds);
     private AutoAdapter autoAdapter = new AutoAdapter() {
         @Override
-        void onClickItem(View view, Object item, Object listener) {
+        protected void onClickItem(View view, Object item, Object listener) {
 
         }
     };
@@ -193,7 +193,7 @@ public class AutoAdapterTest {
     private AutoAdapter givenAdapterFor2Models() {
         autoAdapter = new AutoAdapter() {
             @Override
-            void onClickItem(View view, Object item, Object listener) {
+            protected void onClickItem(View view, Object item, Object listener) {
 
             }
         };

@@ -12,8 +12,20 @@ class AdapterGenerator(private val adapterName: String, private val modelToFacto
         addConstructor(adapterBuilder)
         addMethodsForEachModel(adapterBuilder)
         addOnCLickItemMethod(adapterBuilder)
+        addRegisterListenerMethods(adapterBuilder)
 
         return adapterBuilder.build()
+    }
+
+    private fun addRegisterListenerMethods(adapterBuilder: TypeSpec.Builder) {
+        listenersWithMethods.keys.forEach {
+            val registerMethod = MethodSpec.methodBuilder("registerForEvents")
+                    .addModifiers(Modifier.PUBLIC)
+                    .addParameter(TypeName.get(it.asType()), "listener")
+                    .addCode("super.registerForEvents(listener);\n")
+                    .build()
+            adapterBuilder.addMethod(registerMethod)
+        }
     }
 
     private fun addOnCLickItemMethod(adapterBuilder: TypeSpec.Builder) {
@@ -84,6 +96,7 @@ class AdapterGenerator(private val adapterName: String, private val modelToFacto
 
 
         val onClickMethod = MethodSpec.methodBuilder("onClickItem")
+                .addModifiers(Modifier.PROTECTED)
                 .addParameter(AndroidClassNames.VIEW, "view")
                 .addParameter(ClassName.get(Any::class.java), "item")
                 .addParameter(ClassName.get(Any::class.java), "listener")
@@ -95,7 +108,7 @@ class AdapterGenerator(private val adapterName: String, private val modelToFacto
 
     private fun createClassBuilder(): TypeSpec.Builder {
         return TypeSpec.classBuilder(adapterName)
-                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                .addModifiers(Modifier.PUBLIC)
                 .superclass(AUTO_ADAPTER_CLASSNAME)
     }
 
